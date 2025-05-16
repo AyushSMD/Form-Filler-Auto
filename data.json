@@ -1,0 +1,21 @@
+{
+  "Email": true,
+  "Roll No": "123456",
+  "Name": "John Doe",
+  "Stream": "B.Tech",
+  "Branch": "CSE",
+  "DOB": "24/01/2004",
+  "Gender": "Male",
+  "Email ID": "john@example.com",
+  "Mobile No": "9876543210",
+  "10th%": "92",
+  "10th YOP": "2016",
+  "12th/Diploma%": "89",
+  "12th/Diploma YOP": "2018",
+  "B.Tech(CGPA)": "8.5",
+  "No of Backlogs": "0",
+  "College Name": "XYZ College",
+  "YOP": "2022",
+  "Profile Apply for": "Software Engineer",
+  "Paste your updated resume link": "https://example.com/resume.pdf"
+}

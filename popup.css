@@ -1,0 +1,16 @@
+body {
+  font-family: sans-serif;
+  padding: 10px;
+  width: 240px;
+}
+
+button {
+  margin: 5px 0;
+  width: 100%;
+  padding: 8px;
+}
+
+#matchCount, #fileName {
+  font-weight: bold;
+  margin-top: 8px;
+}
