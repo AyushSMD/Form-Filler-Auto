@@ -1,4 +1,5 @@
-function fillFormFields() {
+// content.js (updated: reliable email checkbox selection using full-text matching block)
+function fillFormFields(callback) {
   chrome.storage.local.get("formData", (result) => {
     if (!result.formData) return;
 
@@ -9,15 +10,15 @@ function fillFormFields() {
     listItems.forEach((item) => {
       const labelText = item.innerText.split("\n")[0].trim();
 
-      // Text & Email
-      if (data[labelText] && item.querySelector("input[type='text'], input[type='email']")) {
-        const input = item.querySelector("input[type='text'], input[type='email']");
+      // Text, Email, URL
+      if (data[labelText] && item.querySelector("input[type='text'], input[type='email'], input[type='url']")) {
+        const input = item.querySelector("input[type='text'], input[type='email'], input[type='url']");
         input.value = data[labelText];
         input.dispatchEvent(new Event('input', { bubbles: true }));
         matchedCount++;
       }
 
-      // Checkboxes (including email opt-in)
+      // Checkboxes (array-based)
       if (Array.isArray(data[labelText])) {
         const checkboxes = item.querySelectorAll("div[role='checkbox']");
         checkboxes.forEach((checkbox) => {
@@ -27,12 +28,6 @@ function fillFormFields() {
             matchedCount++;
           }
         });
-      } else if (typeof data[labelText] === "boolean") {
-        const checkbox = item.querySelector("div[role='checkbox']");
-        if (checkbox && checkbox.getAttribute('aria-checked') !== data[labelText].toString()) {
-          checkbox.click();
-          matchedCount++;
-        }
       }
 
       // Dropdowns
@@ -48,7 +43,7 @@ function fillFormFields() {
               matchedCount++;
             }
           });
-          dropdown.blur(); // Close dropdown after selection
+          document.body.click(); // Attempt to close dropdown by clicking body
         }, 300);
       }
 
@@ -68,14 +63,38 @@ function fillFormFields() {
       }
     });
 
+    // Refined checkbox logic: target the 'Email' field and click the checkbox inside it
+    const emailField = Array.from(document.querySelectorAll("div[role='listitem']")).find(item => {
+  const label = item.querySelector("span");
+  return label && label.textContent.trim() === "Email";
+});
+
+    if (emailField && data["Email"] === true) {
+      const checkbox = emailField.querySelector("div[role='checkbox']");
+      if (checkbox && checkbox.getAttribute("aria-checked") !== "true") {
+        checkbox.click();
+        matchedCount++;
+      }
+    }
+
+        textBlocks.forEach(({ checkbox, text }) => {
+          if (text.includes(key) && checkbox.getAttribute('aria-checked') !== 'true') {
+            checkbox.click();
+            matchedCount++;
+          }
+        });
+      }
+    }
+
     chrome.storage.local.set({ matchCount: matchedCount }, () => {
       chrome.runtime.sendMessage({ type: "updateMatchCount", count: matchedCount });
+      if (callback) callback();
     });
   });
 }
 
 function resetFormFields() {
-  const inputs = document.querySelectorAll("input[type='text'], input[type='email'], input[type='date']");
+  const inputs = document.querySelectorAll("input[type='text'], input[type='email'], input[type='date'], input[type='url']");
   inputs.forEach((input) => {
     input.value = "";
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -84,14 +103,30 @@ function resetFormFields() {
   const checkboxes = document.querySelectorAll("div[role='checkbox'][aria-checked='true']");
   checkboxes.forEach((checkbox) => checkbox.click());
 
+  // Reset dropdowns to "Choose" or first option
+  const listItems = document.querySelectorAll("div[role='listitem']");
+  listItems.forEach((item) => {
+    const listbox = item.querySelector("div[role='listbox']");
+    if (listbox) {
+      listbox.click();
+      setTimeout(() => {
+        const options = item.querySelectorAll("div[role='option']");
+        if (options.length > 0) options[0].click();
+        document.body.click();
+      }, 300);
+    }
+  });
+
   const selectedOptions = document.querySelectorAll("div[role='option'][aria-selected='true']");
   selectedOptions.forEach((option) => option.click());
-
-  const listboxes = document.querySelectorAll("div[role='listbox']");
-  listboxes.forEach(lb => lb.blur()); // Close dropdowns after reset
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === "fillForm") fillFormFields();
-  if (msg.type === "resetForm") resetFormFields();
+  if (msg.type === "fillForm") {
+    fillFormFields(() => setTimeout(() => fillFormFields(), 500)); // Double run for dropdowns
+  }
+  if (msg.type === "resetForm") {
+    resetFormFields();
+    setTimeout(() => resetFormFields(), 500); // ensure dropdowns are reset too
+  }
 });
