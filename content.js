@@ -17,16 +17,22 @@ function fillFormFields() {
         matchedCount++;
       }
 
-      // Checkboxes
+      // Checkboxes (including email opt-in)
       if (Array.isArray(data[labelText])) {
         const checkboxes = item.querySelectorAll("div[role='checkbox']");
         checkboxes.forEach((checkbox) => {
           const checkboxLabel = checkbox.parentElement.innerText.trim();
           if (data[labelText].includes(checkboxLabel)) {
-            checkbox.click();
+            if (checkbox.getAttribute('aria-checked') !== 'true') checkbox.click();
             matchedCount++;
           }
         });
+      } else if (typeof data[labelText] === "boolean") {
+        const checkbox = item.querySelector("div[role='checkbox']");
+        if (checkbox && checkbox.getAttribute('aria-checked') !== data[labelText].toString()) {
+          checkbox.click();
+          matchedCount++;
+        }
       }
 
       // Dropdowns
@@ -42,23 +48,20 @@ function fillFormFields() {
               matchedCount++;
             }
           });
+          dropdown.blur(); // Close dropdown after selection
         }, 300);
       }
 
-      // DOB Handling
+      // DOB Handling (Google Forms date picker style)
       if (labelText === "DOB") {
         const dobValue = data["DOB"];
         if (dobValue) {
           const [day, month, year] = dobValue.split("/");
-          const inputs = item.querySelectorAll("input[type='text']");
-          if (inputs.length >= 3) {
-            inputs[0].value = day;
-            inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-            inputs[1].value = month;
-            inputs[1].dispatchEvent(new Event('input', { bubbles: true }));
-            inputs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
-            inputs[2].value = year;
-            inputs[2].dispatchEvent(new Event('input', { bubbles: true }));
+          const input = item.querySelector("input[type='date']");
+          if (input) {
+            const formatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            input.value = formatted;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
             matchedCount++;
           }
         }
@@ -72,7 +75,7 @@ function fillFormFields() {
 }
 
 function resetFormFields() {
-  const inputs = document.querySelectorAll("input[type='text'], input[type='email']");
+  const inputs = document.querySelectorAll("input[type='text'], input[type='email'], input[type='date']");
   inputs.forEach((input) => {
     input.value = "";
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -83,13 +86,12 @@ function resetFormFields() {
 
   const selectedOptions = document.querySelectorAll("div[role='option'][aria-selected='true']");
   selectedOptions.forEach((option) => option.click());
+
+  const listboxes = document.querySelectorAll("div[role='listbox']");
+  listboxes.forEach(lb => lb.blur()); // Close dropdowns after reset
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === "fillForm") {
-    fillFormFields();
-  }
-  if (msg.type === "resetForm") {
-    resetFormFields();
-  }
+  if (msg.type === "fillForm") fillFormFields();
+  if (msg.type === "resetForm") resetFormFields();
 });
