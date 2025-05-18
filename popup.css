@@ -1,16 +1,140 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   font-family: sans-serif;
   padding: 10px;
-  width: 240px;
+  width: 260px;
+  background-color: #004798;
+  border: solid #0052b1 1px 50%;
+}
+
+h2 {
+  text-align: center;
+  font-size: 1.25rem;
+  padding: 0px;
+  margin: 5px 0px 10px 0px;
+  color: #FFE07C;
+}
+
+.contentBox {
+  margin-top: 15px;
+  background-color: #003470;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.fileDisplay,.matchDisplay,.buttonDisplay{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.matchDisplay{
+  margin: -25px 0px 0px 0px;
+}
+
+.fileDisplay{
+  margin-top: -20px;
+}
+
+.buttonDisplay{
+  gap: 6px;
+  margin-top: -10px;
 }
 
 button {
   margin: 5px 0;
   width: 100%;
   padding: 8px;
+  border: solid white 0px;
+  border-radius: 2px;
+  color: white;
 }
 
-#matchCount, #fileName {
+button:hover{
+  scale: 1.05;
+}
+
+#fileName {
   font-weight: bold;
-  margin-top: 8px;
+  padding-left: 10px;
+  margin: 0px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#matchCount {
+  font-weight: bold;
+}
+
+p {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  color: white;
+}
+
+footer p,footer a{
+  color: #88A5C5;
+}
+
+a:hover {
+  color: white;
+}
+
+a{
+  text-underline-offset: 2px;
+}
+
+::file-selector-button {
+  background-color: #D4D4D4;
+  position: relative;
+  margin-right: 20px;
+  margin-left: 20px;
+  width: 100%;
+  max-width: 220px;
+  padding: 8px;
+  transform: translateX(20px);
+  right: 40px;
+  border: none;
+  border-radius: 2px;
+}
+
+::file-selector-button:hover{
+  scale: 1.05;
+  right:42px
+}
+
+#fillForm{
+  background-color: #00930A;
+}
+
+#resetForm{
+ background-color: #B02C00;
+}
+
+footer{
+  margin: 3px 0px 3px 0px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0px 2px;
+}
+
+.ftr-1{
+
+  width: 100%;
+  margin: 0px -10px -10px -10px;
+  padding: 2px 10px 2px 10px;
+  font-size: 0.75rem;
+}
+
+.ftr-2{
+
+  margin: 0px -10px -10px -10px;
+  padding: 2px 10px 2px 10px;
+  font-size: 0.75rem;
 }

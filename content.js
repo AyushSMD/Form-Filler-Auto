@@ -1,4 +1,4 @@
-// content.js (updated: reliable email checkbox selection using full-text matching block)
+// content.js (corrected full structure and indentation)
 function fillFormFields(callback) {
   chrome.storage.local.get("formData", (result) => {
     if (!result.formData) return;
@@ -63,26 +63,23 @@ function fillFormFields(callback) {
       }
     });
 
-    // Refined checkbox logic: target the 'Email' field and click the checkbox inside it
+    // Refined checkbox logic: target the 'Email' field and click the checkbox next to the specific string
     const emailField = Array.from(document.querySelectorAll("div[role='listitem']")).find(item => {
-  const label = item.querySelector("span");
-  return label && label.textContent.trim() === "Email";
-});
+      const label = item.querySelector("span");
+      return label && label.textContent.trim() === "Email";
+    });
 
-    if (emailField && data["Email"] === true) {
-      const checkbox = emailField.querySelector("div[role='checkbox']");
-      if (checkbox && checkbox.getAttribute("aria-checked") !== "true") {
-        checkbox.click();
+    if (emailField && typeof data["Email"] === "object" && typeof data["Email"].match === "string") {
+      const checkboxText = data["Email"].match;
+      const checkboxEntry = Array.from(emailField.querySelectorAll("div[role='checkbox']")).find(checkbox => {
+        const text = checkbox.parentElement?.innerText || "";
+        return text.includes(checkboxText);
+      });
+
+      if (checkboxEntry && checkboxEntry.getAttribute("aria-checked") !== "true") {
+        const clickTarget = checkboxEntry.closest("div[role='presentation']") || checkboxEntry;
+        clickTarget.click();
         matchedCount++;
-      }
-    }
-
-        textBlocks.forEach(({ checkbox, text }) => {
-          if (text.includes(key) && checkbox.getAttribute('aria-checked') !== 'true') {
-            checkbox.click();
-            matchedCount++;
-          }
-        });
       }
     }
 
@@ -127,6 +124,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg.type === "resetForm") {
     resetFormFields();
-    setTimeout(() => resetFormFields(), 500); // ensure dropdowns are reset too
+    // setTimeout(() => resetFormFields(), 500); // ensure dropdowns are reset too
   }
 });

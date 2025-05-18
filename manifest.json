@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Google Forms AutoFiller",
+  "name": "Form Filler Auto",
   "version": "0.3",
   "description": "Autofills Google Forms from a JSON file.",
   "permissions": [

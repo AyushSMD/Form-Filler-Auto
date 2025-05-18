@@ -2,7 +2,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.local.get(["uploadedFileName", "matchCount"], (result) => {
     document.getElementById("fileName").innerText = result.uploadedFileName || "No file uploaded";
-    document.getElementById("matchCount").innerText = "Matched Fields: " + (result.matchCount || 0);
+    document.getElementById("matchCount").innerText = (result.matchCount || 0);
   });
 });
 
@@ -14,7 +14,7 @@ document.getElementById("fileInput").addEventListener("change", (e) => {
     const data = JSON.parse(reader.result);
     chrome.storage.local.set({ formData: data, uploadedFileName: file.name, matchCount: 0 });
     document.getElementById("fileName").innerText = file.name;
-    document.getElementById("matchCount").innerText = "Matched Fields: 0";
+    document.getElementById("matchCount").innerText = "0";
   };
   reader.readAsText(file);
 });
@@ -35,6 +35,6 @@ document.getElementById("resetForm").addEventListener("click", () => {
 // Update match count on message from content script
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "updateMatchCount") {
-    document.getElementById("matchCount").innerText = "Matched Fields: " + msg.count;
+    document.getElementById("matchCount").innerText = msg.count;
   }
 });

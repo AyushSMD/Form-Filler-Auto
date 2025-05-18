@@ -1,17 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Form AutoFiller</title>
+  <title>Form Filler Auto</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h2>AutoFill Form</h2>
-  <input type="file" id="fileInput" accept=".json">
-  <p id="fileName">No file uploaded</p>
-  <button id="fillForm">Fill Form</button>
-  <button id="resetForm">Reset Form</button>
-  <p id="matchCount">Matched Fields: 0</p>
-
+  <h2>Form Filler Auto</h2>
+  <div class="contentBox">
+    <input type="file" id="fileInput" accept=".json">
+    <label for="fileInput"></label>
+    <br>
+    <div class="fileDisplay">
+      <p>Reading From:</p>
+      <p id="fileName">No file uploaded</p>
+    </div>
+    <div class="matchDisplay">
+      <p>Feilds Matched:</p>
+      <p id="matchCount">0</p>
+    </div>
+    <div class="buttonDisplay">
+      <button id="fillForm">Fill Form</button>
+      <button id="resetForm">Reset Form</button>
+    </div>  
+  </div>
   <script src="popup.js"></script>
 </body>
+<footer>
+  <p class="ftr-1">Made by <a target="_blank" href="https://ayushsamad.com/">Ayush Samad</a></p>
+  <p class="ftr-2"><a href="">Help<a></p>
+</footer>
 </html>
