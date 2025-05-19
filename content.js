@@ -5,7 +5,7 @@ function fillFormFields(callback) {
     let matchedCount = 0;
     const rawData = result.formData;
 
-    // Normalize keys to lowercase for case-insensitive lookup
+    // Normalize keys for case-insensitive matching
     const data = {};
     for (const key in rawData) {
       data[key.toLowerCase()] = rawData[key];
@@ -16,19 +16,28 @@ function fillFormFields(callback) {
     listItems.forEach((item) => {
       const labelSpan = item.querySelector("span");
       const labelText = labelSpan ? labelSpan.textContent.trim() : item.innerText.split("\n")[0].trim();
-      const labelKey = labelText.toLowerCase();
+      const labelTextLower = labelText.toLowerCase();
 
-      const fieldData = data[labelKey];
+      // 🔍 Match key: exact match first, then fuzzy
+      let fieldKey = Object.keys(data).find(key => key === labelTextLower);
+      if (!fieldKey) {
+        fieldKey = Object.keys(data).find(key =>
+          key.includes(labelTextLower) || labelTextLower.includes(key)
+        );
+      }
 
-      // Text, Email, URL
-      if (fieldData && item.querySelector("input[type='text'], input[type='email'], input[type='url']")) {
+      const fieldData = fieldKey ? data[fieldKey] : null;
+
+      // Fill input (text/email/url) if value is string or number
+      if ((typeof fieldData === "string" || typeof fieldData === "number") &&
+          item.querySelector("input[type='text'], input[type='email'], input[type='url']")) {
         const input = item.querySelector("input[type='text'], input[type='email'], input[type='url']");
         input.value = fieldData;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         matchedCount++;
       }
 
-      // Checkboxes (array-based)
+      // Checkboxes (match against array values)
       if (Array.isArray(fieldData)) {
         const checkboxes = item.querySelectorAll("div[role='checkbox']");
         checkboxes.forEach((checkbox) => {
@@ -42,44 +51,50 @@ function fillFormFields(callback) {
         });
       }
 
-      // Dropdowns (support array of alternatives)
+      // Dropdowns
       if (fieldData && item.querySelector("div[role='listbox']")) {
         const dropdown = item.querySelector("div[role='listbox']");
         dropdown.click();
 
+        const expectedValues = Array.isArray(fieldData) ? fieldData : [fieldData];
         setTimeout(() => {
           const options = document.querySelectorAll("div[role='option']");
-          const expectedValues = Array.isArray(fieldData) ? fieldData : [fieldData];
+          let matched = false;
 
           options.forEach((opt) => {
             const optionText = opt.innerText.trim();
             if (expectedValues.includes(optionText)) {
               opt.click();
-              matchedCount++;
+              matched = true;
             }
           });
+
+          if (matched) {
+            matchedCount++;
+            chrome.storage.local.set({ matchCount: matchedCount }, () => {
+              chrome.runtime.sendMessage({ type: "updateMatchCount", count: matchedCount });
+            });
+          }
 
           document.body.click();
         }, 300);
       }
 
       // DOB Handling
-      if (labelKey === "dob") {
+      if (labelTextLower === "dob" && data["dob"]) {
         const dobValue = data["dob"];
-        if (dobValue) {
-          const [day, month, year] = dobValue.split("/");
-          const input = item.querySelector("input[type='date']");
-          if (input) {
-            const formatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-            input.value = formatted;
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            matchedCount++;
-          }
+        const [day, month, year] = dobValue.split("/");
+        const input = item.querySelector("input[type='date']");
+        if (input) {
+          const formatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          input.value = formatted;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          matchedCount++;
         }
       }
 
-      // Email checkbox with custom match
-      if (labelKey === "email" && typeof data["email"] === "object" && typeof data["email"].match === "string") {
+      // Email checkbox match logic
+      if (labelTextLower === "email" && typeof data["email"] === "object" && typeof data["email"].match === "string") {
         const targetText = data["email"].match;
         const checkboxes = item.querySelectorAll("div[role='checkbox']");
         checkboxes.forEach((checkbox) => {
@@ -87,10 +102,7 @@ function fillFormFields(callback) {
           if (fullText.includes(targetText)) {
             if (checkbox.getAttribute("aria-checked") !== "true") {
               checkbox.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-              console.log("✔ Email match found and checkbox clicked:", fullText);
               matchedCount++;
-            } else {
-              console.log("☑ Email checkbox already checked:", fullText);
             }
           }
         });
@@ -131,11 +143,56 @@ function resetFormFields() {
   selectedOptions.forEach((option) => option.click());
 }
 
+function scanFormFieldsForMatch() {
+  chrome.storage.local.get("formData", (result) => {
+    if (!result.formData) return;
+
+    const rawData = result.formData;
+    const data = {};
+    for (const key in rawData) {
+      data[key.toLowerCase()] = rawData[key];
+    }
+
+    const listItems = document.querySelectorAll("div[role='listitem']");
+    let matchCount = 0;
+
+    listItems.forEach((item) => {
+      const labelSpan = item.querySelector("span");
+      const labelText = labelSpan ? labelSpan.textContent.trim() : item.innerText.split("\n")[0].trim();
+      const labelTextLower = labelText.toLowerCase();
+
+      // Match key: exact > fuzzy
+      let fieldKey = Object.keys(data).find(key => key === labelTextLower);
+      if (!fieldKey) {
+        fieldKey = Object.keys(data).find(key =>
+          key.includes(labelTextLower) || labelTextLower.includes(key)
+        );
+      }
+
+      const fieldData = fieldKey ? data[fieldKey] : null;
+
+      if (typeof fieldData === "string" || typeof fieldData === "number" || Array.isArray(fieldData)) {
+        matchCount++;
+      }
+
+      if (labelTextLower === "dob" && data["dob"]) matchCount++;
+      if (labelTextLower === "email" && typeof data["email"] === "object" && typeof data["email"].match === "string") matchCount++;
+    });
+
+    chrome.storage.local.set({ matchCount }, () => {
+      chrome.runtime.sendMessage({ type: "updateMatchCount", count: matchCount });
+    });
+  });
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "fillForm") {
-    fillFormFields(() => setTimeout(() => fillFormFields(), 500)); // Double run for dropdowns
+    fillFormFields(() => setTimeout(() => fillFormFields(), 500));
   }
   if (msg.type === "resetForm") {
     resetFormFields();
+  }
+  if (msg.type === "scanForm") {
+    scanFormFieldsForMatch();
   }
 });

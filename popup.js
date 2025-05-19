@@ -1,12 +1,15 @@
-// Load file name and match count when popup opens
 document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.local.get(["uploadedFileName", "matchCount"], (result) => {
     document.getElementById("fileName").innerText = result.uploadedFileName || "No file uploaded";
-    document.getElementById("matchCount").innerText = (result.matchCount || 0);
+    document.getElementById("matchCount").innerText = result.matchCount || 0;
+  });
+
+  // Trigger match scan
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    chrome.tabs.sendMessage(tabs[0].id, { type: "scanForm" });
   });
 });
 
-// Handle file upload
 document.getElementById("fileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   const reader = new FileReader();
@@ -31,8 +34,6 @@ document.getElementById("resetForm").addEventListener("click", () => {
   });
 });
 
-
-// Update match count on message from content script
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "updateMatchCount") {
     document.getElementById("matchCount").innerText = msg.count;
