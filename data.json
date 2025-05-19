@@ -1,7 +1,5 @@
 {
-  "Email": {
-    "match": "as the email to be included with my response"
-  },
+  "as the email to be included with my response": true,
   "Roll No": "22053762",
   "Name": "Ayush MT Samad",
   "Stream": "B.Tech",
@@ -16,7 +14,10 @@
   "12th/Diploma YOP": "2022",
   "B.Tech(CGPA)": "7.20",
   "No of Backlogs": "0",
-  "College Name": "KIIT Deemed to be University",
+  "College Name": ["KIIT Deemed to be University","KIIT-DU"],
   "YOP": "2026",
-  "Paste your updated resume link": "https://drive.google.com/file/d/11AKUW60HfmtqAHfZx_Oe_c8FYdC5t1O7/view?usp=sharing"
+  "Paste your updated resume link": "https://drive.google.com/file/d/11AKUW60HfmtqAHfZx_Oe_c8FYdC5t1O7/view?usp=sharing",
+  "Share your resume Link" : "https://drive.google.com/file/d/11AKUW60HfmtqAHfZx_Oe_c8FYdC5t1O7/view?usp=sharing",
+  "Nationality" : "Indian",
+  "Current Location(City with State)" : "Ranchi,Jharkhand"
 }

@@ -1,55 +1,71 @@
-// content.js (corrected full structure and indentation)
 function fillFormFields(callback) {
   chrome.storage.local.get("formData", (result) => {
     if (!result.formData) return;
 
     let matchedCount = 0;
-    const data = result.formData;
+    const rawData = result.formData;
+
+    // Normalize keys to lowercase for case-insensitive lookup
+    const data = {};
+    for (const key in rawData) {
+      data[key.toLowerCase()] = rawData[key];
+    }
+
     const listItems = document.querySelectorAll("div[role='listitem']");
 
     listItems.forEach((item) => {
-      const labelText = item.innerText.split("\n")[0].trim();
+      const labelSpan = item.querySelector("span");
+      const labelText = labelSpan ? labelSpan.textContent.trim() : item.innerText.split("\n")[0].trim();
+      const labelKey = labelText.toLowerCase();
+
+      const fieldData = data[labelKey];
 
       // Text, Email, URL
-      if (data[labelText] && item.querySelector("input[type='text'], input[type='email'], input[type='url']")) {
+      if (fieldData && item.querySelector("input[type='text'], input[type='email'], input[type='url']")) {
         const input = item.querySelector("input[type='text'], input[type='email'], input[type='url']");
-        input.value = data[labelText];
+        input.value = fieldData;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         matchedCount++;
       }
 
       // Checkboxes (array-based)
-      if (Array.isArray(data[labelText])) {
+      if (Array.isArray(fieldData)) {
         const checkboxes = item.querySelectorAll("div[role='checkbox']");
         checkboxes.forEach((checkbox) => {
-          const checkboxLabel = checkbox.parentElement.innerText.trim();
-          if (data[labelText].includes(checkboxLabel)) {
-            if (checkbox.getAttribute('aria-checked') !== 'true') checkbox.click();
-            matchedCount++;
+          const checkboxLabel = checkbox.parentElement?.innerText.trim();
+          if (fieldData.includes(checkboxLabel)) {
+            if (checkbox.getAttribute('aria-checked') !== 'true') {
+              checkbox.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+              matchedCount++;
+            }
           }
         });
       }
 
-      // Dropdowns
-      if (data[labelText] && item.querySelector("div[role='listbox']")) {
+      // Dropdowns (support array of alternatives)
+      if (fieldData && item.querySelector("div[role='listbox']")) {
         const dropdown = item.querySelector("div[role='listbox']");
         dropdown.click();
 
         setTimeout(() => {
           const options = document.querySelectorAll("div[role='option']");
+          const expectedValues = Array.isArray(fieldData) ? fieldData : [fieldData];
+
           options.forEach((opt) => {
-            if (opt.innerText.trim() === data[labelText]) {
+            const optionText = opt.innerText.trim();
+            if (expectedValues.includes(optionText)) {
               opt.click();
               matchedCount++;
             }
           });
-          document.body.click(); // Attempt to close dropdown by clicking body
+
+          document.body.click();
         }, 300);
       }
 
-      // DOB Handling (Google Forms date picker style)
-      if (labelText === "DOB") {
-        const dobValue = data["DOB"];
+      // DOB Handling
+      if (labelKey === "dob") {
+        const dobValue = data["dob"];
         if (dobValue) {
           const [day, month, year] = dobValue.split("/");
           const input = item.querySelector("input[type='date']");
@@ -61,27 +77,25 @@ function fillFormFields(callback) {
           }
         }
       }
-    });
 
-    // Refined checkbox logic: target the 'Email' field and click the checkbox next to the specific string
-    const emailField = Array.from(document.querySelectorAll("div[role='listitem']")).find(item => {
-      const label = item.querySelector("span");
-      return label && label.textContent.trim() === "Email";
-    });
-
-    if (emailField && typeof data["Email"] === "object" && typeof data["Email"].match === "string") {
-      const checkboxText = data["Email"].match;
-      const checkboxEntry = Array.from(emailField.querySelectorAll("div[role='checkbox']")).find(checkbox => {
-        const text = checkbox.parentElement?.innerText || "";
-        return text.includes(checkboxText);
-      });
-
-      if (checkboxEntry && checkboxEntry.getAttribute("aria-checked") !== "true") {
-        const clickTarget = checkboxEntry.closest("div[role='presentation']") || checkboxEntry;
-        clickTarget.click();
-        matchedCount++;
+      // Email checkbox with custom match
+      if (labelKey === "email" && typeof data["email"] === "object" && typeof data["email"].match === "string") {
+        const targetText = data["email"].match;
+        const checkboxes = item.querySelectorAll("div[role='checkbox']");
+        checkboxes.forEach((checkbox) => {
+          const fullText = checkbox.parentElement?.innerText.trim() || "";
+          if (fullText.includes(targetText)) {
+            if (checkbox.getAttribute("aria-checked") !== "true") {
+              checkbox.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+              console.log("✔ Email match found and checkbox clicked:", fullText);
+              matchedCount++;
+            } else {
+              console.log("☑ Email checkbox already checked:", fullText);
+            }
+          }
+        });
       }
-    }
+    });
 
     chrome.storage.local.set({ matchCount: matchedCount }, () => {
       chrome.runtime.sendMessage({ type: "updateMatchCount", count: matchedCount });
@@ -100,7 +114,6 @@ function resetFormFields() {
   const checkboxes = document.querySelectorAll("div[role='checkbox'][aria-checked='true']");
   checkboxes.forEach((checkbox) => checkbox.click());
 
-  // Reset dropdowns to "Choose" or first option
   const listItems = document.querySelectorAll("div[role='listitem']");
   listItems.forEach((item) => {
     const listbox = item.querySelector("div[role='listbox']");
@@ -124,6 +137,5 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg.type === "resetForm") {
     resetFormFields();
-    // setTimeout(() => resetFormFields(), 500); // ensure dropdowns are reset too
   }
 });
