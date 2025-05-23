@@ -8,6 +8,9 @@
     "scripting",
     "activeTab"
   ],
+     "icons": {
+    "128": "FFA.png"
+  },
   "action": {
     "default_popup": "popup.html"
   },
