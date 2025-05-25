@@ -93,6 +93,20 @@ function fillFormFields(callback) {
         }
       }
 
+      // Radio buttons
+      if ((typeof fieldData === "string" || typeof fieldData === "number") && item.querySelector("div[role='radiogroup']")) {
+        const radios = item.querySelectorAll("div[role='radio']");
+        radios.forEach((radio) => {
+          const labelContainer = radio.closest("label") || radio.parentElement;
+          const radioLabel = labelContainer?.innerText.trim();
+
+          if (radioLabel === fieldData && radio.getAttribute("aria-checked") !== "true") {
+            radio.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+            matchedCount++;
+          }
+        });
+      }
+
       // Email checkbox match logic
       if (labelTextLower === "email" && typeof data["email"] === "object" && typeof data["email"].match === "string") {
         const targetText = data["email"].match;
@@ -125,6 +139,9 @@ function resetFormFields() {
 
   const checkboxes = document.querySelectorAll("div[role='checkbox'][aria-checked='true']");
   checkboxes.forEach((checkbox) => checkbox.click());
+
+  const radios = document.querySelectorAll("div[role='radio'][aria-checked='true']");
+  radios.forEach((radio) => radio.click());
 
   const listItems = document.querySelectorAll("div[role='listitem']");
   listItems.forEach((item) => {
