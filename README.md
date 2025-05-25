@@ -68,14 +68,14 @@
 
 > [!IMPORTANT]
 > Form Filler auto is not a complete product and still under development there are certain unavoidable glitches that you might face while using the extension. 
-
+>
 > Stuff like resetting radio buttons is still a problem. I recommend you to use the clear form button at the end of every form.
-
+>
 > Try reloading the page or the extension form the extension settings in any case of error.
-
+>
 > The capabilities of the extension is currently limited to google forms.
 
 > [!NOTE]
 > I made FFA to fill annoying google forms that my college sends every once in a while asking for the same details again and again for different companies.
-
+>
 > Happy Form Filling!!!
