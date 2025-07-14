@@ -5,7 +5,6 @@
   "description": "Autofills Google Forms from a JSON file.",
   "permissions": [
     "storage",
-    "scripting",
     "activeTab"
   ],
      "icons": {
